@@ -1,6 +1,6 @@
 // ---- Config ----
 // Cambia API_URL con l'URL del tuo backend deployato
-const API_URL = 'https://red-wire-backend.railway.app'; // es. Railway
+const API_URL = 'https://red-wire.onrender.com'; // es. Railway
 
 // Token salvato una volta in localStorage (non è un dato sensibile come una password,
 // ma è specifico per dispositivo — Emily usa il suo, Riccardo il suo)
