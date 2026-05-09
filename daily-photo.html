@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Foto del Giorno - Red Wire</title>
+  <link rel="stylesheet" href="daily-photo.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="index.html" class="back-button" aria-label="Torna alla home">&#8592;</a>
+      <h1>📸 Foto del Giorno</h1>
+      <p class="subtitle">Entrambi devono caricare una foto al giorno</p>
+    </header>
+
+    <main>
+      <div class="day-nav" aria-label="Naviga tra i giorni">
+        <button type="button" class="day-nav-btn" id="prevDayBtn">&#8592; Giorno precedente</button>
+        <button type="button" class="day-nav-btn" id="nextDayBtn">Giorno successivo &#8594;</button>
+      </div>
+      <div class="date-chip" id="todayLabel"></div>
+      <p class="viewing-hint" id="viewingHint"></p>
+
+      <section class="upload-card" data-user-id="userA">
+        <div class="card-head">
+          <h2>Emily</h2>
+          <span class="status-badge">In attesa</span>
+        </div>
+        <label class="upload-area">
+          <input type="file" accept="image/*" />
+          <span class="placeholder">Tocca per scegliere una foto</span>
+          <img class="preview" alt="Anteprima Utente 1">
+        </label>
+      </section>
+
+      <section class="upload-card" data-user-id="userB">
+        <div class="card-head">
+          <h2>Riccardo</h2>
+          <span class="status-badge">In attesa</span>
+        </div>
+        <label class="upload-area">
+          <input type="file" accept="image/*" />
+          <span class="placeholder">Tocca per scegliere una foto</span>
+          <img class="preview" alt="Anteprima Utente 2">
+        </label>
+      </section>
+
+      <div class="progress-box">
+        <p class="progress-title">Stato di oggi</p>
+        <p class="progress-text" id="progressText">0/2 foto caricate</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/daily-photo.js"></script>
+</body>
+</html>
