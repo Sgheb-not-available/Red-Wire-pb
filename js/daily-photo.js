@@ -75,12 +75,23 @@ async function uploadPhoto(file, dayKey) {
   return res.json();
 }
 
+async function deletePhoto(dayKey) {
+  const res = await apiFetch(`/photos/${dayKey}`, { method: 'DELETE' });
+  if (!res) return null;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Errore durante la rimozione');
+  }
+  return res.json();
+}
+
 // ---- UI ----
-function setCardState(card, photo, isToday, isMyCard) {
+function setCardState(card, photo, isToday, isMyCard, onDelete) {
   const badge = card.querySelector('.status-badge');
   const preview = card.querySelector('.preview');
   const placeholder = card.querySelector('.placeholder');
   const input = card.querySelector('input[type="file"]');
+  let deleteBtn = card.querySelector('.delete-btn');
 
   if (photo && photo.url) {
     card.classList.add('uploaded');
@@ -90,9 +101,19 @@ function setCardState(card, photo, isToday, isMyCard) {
     if (isMyCard && isToday) {
       badge.textContent = 'Caricata · tocca per cambiare';
       input.disabled = false;
+      if (!deleteBtn) {
+        deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = '✕ Rimuovi foto';
+        card.querySelector('.upload-area').after(deleteBtn);
+      }
+      deleteBtn.style.display = '';
+      deleteBtn.onclick = onDelete;
     } else {
       badge.textContent = 'Caricata ✓';
       input.disabled = true;
+      if (deleteBtn) deleteBtn.style.display = 'none';
     }
   } else {
     card.classList.remove('uploaded');
@@ -101,6 +122,7 @@ function setCardState(card, photo, isToday, isMyCard) {
     placeholder.style.display = '';
     badge.textContent = isMyCard && isToday ? 'In attesa' : (isToday ? 'Non ancora' : 'Non caricata');
     input.disabled = !(isMyCard && isToday);
+    if (deleteBtn) deleteBtn.style.display = 'none';
   }
 }
 
@@ -204,9 +226,25 @@ function initApp() {
     cards.forEach(card => {
       const userId = card.getAttribute('data-user-id');
       setLoading(card, false);
-      setCardState(card, currentPhotos[userId], isToday, userId === myUserId);
+      setCardState(card, currentPhotos[userId], isToday, userId === myUserId, () => handleDelete(card, userId));
     });
     refreshProgress(currentPhotos);
+  }
+
+  async function handleDelete(card, userId) {
+    if (!confirm('Rimuovere la foto?')) return;
+    const dayKey = getDayKey(selectedDate);
+    setLoading(card, true);
+    try {
+      await deletePhoto(dayKey);
+      currentPhotos[userId] = null;
+      setLoading(card, false);
+      setCardState(card, null, true, true, () => handleDelete(card, userId));
+      refreshProgress(currentPhotos);
+    } catch (err) {
+      setLoading(card, false);
+      alert(err.message || 'Errore durante la rimozione');
+    }
   }
 
   prevDayBtn.addEventListener('click', () => {
@@ -227,17 +265,27 @@ function initApp() {
       if (!file) return;
       if (!isSameDay(selectedDate, todayDate) || userId !== myUserId) { input.value = ''; return; }
 
+      // Show local preview immediately
+      const localUrl = URL.createObjectURL(file);
+      const preview = card.querySelector('.preview');
+      const placeholder = card.querySelector('.placeholder');
+      preview.src = localUrl;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
+
       setLoading(card, true);
       try {
         const dayKey = getDayKey(selectedDate);
         await uploadPhoto(file, dayKey);
         currentPhotos = await fetchPhotos(dayKey);
+        URL.revokeObjectURL(localUrl);
         setLoading(card, false);
-        setCardState(card, currentPhotos[userId], true, true);
+        setCardState(card, currentPhotos[userId], true, true, () => handleDelete(card, userId));
         refreshProgress(currentPhotos);
       } catch (err) {
+        URL.revokeObjectURL(localUrl);
         setLoading(card, false);
-        setCardState(card, currentPhotos[userId], true, true);
+        setCardState(card, currentPhotos[userId], true, true, () => handleDelete(card, userId));
         alert(err.message || 'Errore durante il caricamento');
       }
       input.value = '';
