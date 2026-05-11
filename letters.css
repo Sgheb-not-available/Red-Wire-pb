@@ -92,10 +92,9 @@ header h1 {
 
 main {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 16px 0;
+  padding: 20px 16px 16px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -211,15 +210,11 @@ main::-webkit-scrollbar-thumb { background: var(--rose-mid); border-radius: 2px;
 .letter-card.shake { animation: shake 0.35s ease; }
 
 .letter-action-bar {
-  position: sticky;
-  bottom: 0;
-  margin-top: auto;
-  padding-top: 14px;
-  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-  margin-bottom: 0;
+  flex-shrink: 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
   background: var(--cream);
-  box-shadow: 0 -10px 22px var(--cream);
-  z-index: 3;
+  border-top: 1px solid rgba(242, 194, 203, 0.85);
+  box-shadow: 0 -6px 20px rgba(42, 26, 30, 0.06);
 }
 
 .post-letter-btn {
