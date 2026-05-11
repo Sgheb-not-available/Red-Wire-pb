@@ -1,5 +1,28 @@
 const TOTAL_LETTERS = 28;
 const START_DATE = new Date('2026-05-10');
+const API_URL = 'https://red-wire.onrender.com';
+
+const TOKEN_KEY = 'rw_token';
+const MY_USER_KEY = 'rw_user_id';
+
+// ---- Auth ----
+function getToken() { return localStorage.getItem(TOKEN_KEY); }
+function getMyUserId() { return localStorage.getItem(MY_USER_KEY); }
+function saveAuth(token, userId) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(MY_USER_KEY, userId);
+}
+function clearAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(MY_USER_KEY);
+}
+
+function getDayKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 const _KEY_SEED = 'rwire';
 const LETTERS_DATA = {
@@ -126,8 +149,71 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-// ---- Init ----
-document.addEventListener('DOMContentLoaded', function() {
+// ---- Setup dialog ----
+function showSetupDialog() {
+  const overlay = document.createElement('div');
+  overlay.id = 'setup-overlay';
+  overlay.innerHTML = `
+    <div class="setup-modal">
+      <h2>Chi sei?</h2>
+      <p>Seleziona il tuo profilo e inserisci il token che ti è stato condiviso.</p>
+      <div class="setup-users">
+        <button class="setup-user-btn" data-user="userA">Emily</button>
+        <button class="setup-user-btn" data-user="userB">Riccardo</button>
+      </div>
+      <input class="setup-token-input" type="password" placeholder="Token di accesso" autocomplete="off" />
+      <button class="setup-confirm-btn" disabled>Entra</button>
+      <p class="setup-error"></p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  let selectedUser = null;
+  const confirmBtn = overlay.querySelector('.setup-confirm-btn');
+  const tokenInput = overlay.querySelector('.setup-token-input');
+  const errorEl = overlay.querySelector('.setup-error');
+
+  overlay.querySelectorAll('.setup-user-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      overlay.querySelectorAll('.setup-user-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedUser = btn.dataset.user;
+      confirmBtn.disabled = !(selectedUser && tokenInput.value.trim());
+    });
+  });
+
+  tokenInput.addEventListener('input', () => {
+    confirmBtn.disabled = !(selectedUser && tokenInput.value.trim());
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    const token = tokenInput.value.trim();
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Verifica...';
+    errorEl.textContent = '';
+    try {
+      const res = await fetch(`${API_URL}/photos/${getDayKey(new Date())}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        errorEl.textContent = 'Token non valido. Riprova.';
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Entra';
+        return;
+      }
+      saveAuth(token, selectedUser);
+      overlay.remove();
+      initApp();
+    } catch {
+      errorEl.textContent = 'Impossibile contattare il server.';
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Entra';
+    }
+  });
+}
+
+// ---- Main app ----
+function initApp() {
   createModal();
 
   let unlockedCount = 0;
@@ -158,18 +244,33 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   document.getElementById('unlockedCount').textContent = unlockedCount;
-});
 
-setInterval(function() {
-  // refresh states every minute
-  let count = 0;
-  for (let i = 1; i <= TOTAL_LETTERS; i++) {
-    const card = document.querySelector(`[data-letter="${i}"]`);
-    if (isUnlocked(i)) {
-      card.classList.add('unlocked'); card.classList.remove('locked'); count++;
-    } else {
-      card.classList.add('locked'); card.classList.remove('unlocked');
+  setInterval(function() {
+    // refresh states every minute
+    let count = 0;
+    for (let i = 1; i <= TOTAL_LETTERS; i++) {
+      const card = document.querySelector(`[data-letter="${i}"]`);
+      if (isUnlocked(i)) {
+        card.classList.add('unlocked'); card.classList.remove('locked'); count++;
+      } else {
+        card.classList.add('locked'); card.classList.remove('unlocked');
+      }
     }
-  }
-  document.getElementById('unlockedCount').textContent = count;
-}, 60000);
+    document.getElementById('unlockedCount').textContent = count;
+  }, 60000);
+
+  const postLetterBtn = document.getElementById('postLetterBtn');
+  postLetterBtn?.addEventListener('click', () => {
+    alert('La pubblicazione delle lettere sara disponibile presto.');
+  });
+
+  document.querySelector('header h1')?.addEventListener('dblclick', () => {
+    if (confirm('Disconnetti questo dispositivo?')) { clearAuth(); location.reload(); }
+  });
+}
+
+// ---- Entry point ----
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getToken() || !getMyUserId()) showSetupDialog();
+  else initApp();
+});

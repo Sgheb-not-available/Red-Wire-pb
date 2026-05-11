@@ -2,8 +2,6 @@
 // Cambia API_URL con l'URL del tuo backend deployato
 const API_URL = 'https://red-wire.onrender.com';
 
-// Token salvato una volta in localStorage (non è un dato sensibile come una password,
-// ma è specifico per dispositivo — Emily usa il suo, Riccardo il suo)
 const TOKEN_KEY = 'rw_token';
 const MY_USER_KEY = 'rw_user_id';
 
