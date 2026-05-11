@@ -259,11 +259,6 @@ function initApp() {
     document.getElementById('unlockedCount').textContent = count;
   }, 60000);
 
-  const postLetterBtn = document.getElementById('postLetterBtn');
-  postLetterBtn?.addEventListener('click', () => {
-    alert('La pubblicazione delle lettere sara disponibile presto.');
-  });
-
   document.querySelector('header h1')?.addEventListener('dblclick', () => {
     if (confirm('Disconnetti questo dispositivo?')) { clearAuth(); location.reload(); }
   });
