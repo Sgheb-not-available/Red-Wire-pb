@@ -17,13 +17,6 @@ function clearAuth() {
   localStorage.removeItem(MY_USER_KEY);
 }
 
-function getDayKey(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
 const _KEY_SEED = 'rwire';
 const LETTERS_DATA = {
   1: "Nx4AXkU8eHpjEABfBBIHBxFQUgQcUjdUFlc+GxdUXHpjf294HFcYBwBCBhZJAgRWGxkIUhFDHQEMAARYUkVRUglUBgMMAAARWgIHE0VQHlcOGwpDHBhFUo0RGxkcBgxdF1cZAApHEwUMUgQRARUFHQZSEwUFF0VBAB4EE0wff31keCtUHhtOEwlFABZJAgRWGxkIUhVEHR5JEQRDGxQIAAARBxkIUgNeBhhJEwkRFR4GAAteUgQMUgtUUh8IG0VHHRAFGwQRF1caAgBDHVcKG0VQGwIdG0VQUgQMHBFYABJJBwsRAhhOUghUHBhJHgQRFh4aBgRfCBZJEQ1UUgcMAQQRFR6JUhFQHAMAARZYHxhHf288eDUcHQsRFh4fFxdFGxoMHBFeUh4HUjZBExAHE0s8eHpjJgwRExoGXkVjGxQKExdVHQ==",
@@ -192,7 +185,7 @@ function showSetupDialog() {
     confirmBtn.textContent = 'Verifica...';
     errorEl.textContent = '';
     try {
-      const res = await fetch(`${API_URL}/photos/${getDayKey(new Date())}`, {
+      const res = await fetch(`${API_URL}/auth/verify`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {
@@ -201,7 +194,15 @@ function showSetupDialog() {
         confirmBtn.textContent = 'Entra';
         return;
       }
-      saveAuth(token, selectedUser);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        errorEl.textContent = err.error || `Errore dal server (${res.status}). Riprova.`;
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Entra';
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      saveAuth(token, data.userId || selectedUser);
       overlay.remove();
       initApp();
     } catch {

@@ -178,7 +178,7 @@ function showSetupDialog() {
     confirmBtn.textContent = 'Verifica…';
     errorEl.textContent = '';
     try {
-      const res = await fetch(`${API_URL}/photos/${getDayKey(new Date())}`, {
+      const res = await fetch(`${API_URL}/auth/verify`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {
@@ -187,7 +187,15 @@ function showSetupDialog() {
         confirmBtn.textContent = 'Entra';
         return;
       }
-      saveAuth(token, selectedUser);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        errorEl.textContent = err.error || `Errore dal server (${res.status}). Riprova.`;
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Entra';
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      saveAuth(token, data.userId || selectedUser);
       overlay.remove();
       initApp();
     } catch {
